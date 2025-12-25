@@ -1,19 +1,18 @@
 {
   "name": "telegram-referral-bot",
   "version": "1.0.0",
-  "description": "Telegram referral bot with referral tracking",
-  "type": "module",
+  "description": "Telegram referral bot with unique referral tracking and channel join enforcement",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
-    "node-telegram-bot-api": "^0.67.0",
-    "uuid": "^9.0.1"
+    "node-telegram-bot-api": "^0.67.0"
   }
 }

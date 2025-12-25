@@ -1,61 +1,87 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { BOT_TOKEN, PRIVATE_CHANNEL_ID, REQUIRED_REFERRALS } = require('./config');
-const { getUser } = require('./db');
+const { BOT_TOKEN, MAIN_CHANNEL_ID } = require('./config');
+const { getUser, createUser } = require('./db');
 const { handleReferral } = require('./referral');
 const { mainKeyboard } = require('./keyboard');
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-bot.onText(/\/start(?:\s(\d+))?/, (msg, match) => {
+/**
+ * /start command with optional referral ID
+ */
+bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
   const userId = msg.from.id;
   const referrerId = match[1] ? Number(match[1]) : null;
 
-  handleReferral(userId, referrerId);
-  getUser(userId);
+  // Ensure user exists
+  let user = getUser(userId);
+  if (!user) {
+    user = createUser(userId);
+  }
 
-  bot.sendMessage(
+  // Handle referral safely (unique, no self-referral)
+  await handleReferral(userId, referrerId);
+
+  // Check if user joined main channel
+  try {
+    const member = await bot.getChatMember(MAIN_CHANNEL_ID, userId);
+
+    if (['left', 'kicked'].includes(member.status)) {
+      return bot.sendMessage(
+        userId,
+        "🚫 To continue, please join our main channel first.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "📢 Join Channel",
+                  url: `https://t.me/${MAIN_CHANNEL_ID.replace('@', '')}`
+                }
+              ]
+            ]
+          }
+        }
+      );
+    }
+  } catch (err) {
+    console.error("Channel membership check failed:", err.message);
+    return;
+  }
+
+  // Thank user and send referral link automatically
+  await bot.sendMessage(
     userId,
-    "Welcome aboard 🚀\nInvite friends and unlock the private channel.",
+    `🎉 Thanks for joining!\n\nHere’s your personal referral link 👇\nhttps://t.me/${bot.options.username}?start=${userId}`,
     mainKeyboard()
   );
 });
 
+/**
+ * Button menu handler
+ */
 bot.on('message', async (msg) => {
+  if (!msg.text) return;
+
   const userId = msg.from.id;
   const text = msg.text;
   const user = getUser(userId);
 
+  if (!user) return;
+
   if (text === "📊 My Referrals") {
-    bot.sendMessage(
+    return bot.sendMessage(
       userId,
-      `You have *${user.referrals}* referrals.\nYou need *${REQUIRED_REFERRALS}* to unlock.`,
-      { parse_mode: "Markdown" }
+      `📈 You’ve referred *${user.referrals}* unique user(s).\nKeep spreading the word 🚀`,
+      { parse_mode: 'Markdown' }
     );
   }
 
   if (text === "🔗 My Referral Link") {
-    bot.sendMessage(
+    return bot.sendMessage(
       userId,
-      `Your referral link:\nhttps://t.me/${bot.username}?start=${userId}`
+      `🔗 Your referral link:\nhttps://t.me/${bot.options.username}?start=${userId}`
     );
-  }
-
-  if (text === "🔓 Unlock Channel") {
-    if (!user.unlocked) {
-      return bot.sendMessage(
-        userId,
-        `⛔ Access denied.\nInvite ${REQUIRED_REFERRALS - user.referrals} more users.`
-      );
-    }
-
-    try {
-      await bot.createChatInviteLink(PRIVATE_CHANNEL_ID, { member_limit: 1 });
-      const invite = await bot.createChatInviteLink(PRIVATE_CHANNEL_ID);
-
-      bot.sendMessage(userId, `✅ Access granted:\n${invite.invite_link}`);
-    } catch (err) {
-      bot.sendMessage(userId, "⚠️ Failed to generate invite link.");
-    }
   }
 });
 

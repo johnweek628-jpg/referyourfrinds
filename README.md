@@ -1,22 +1,34 @@
-# Telegram Referral Bot
+# 🤖 Telegram Referral Bot
 
-A Telegram bot built with Node.js and Express that unlocks a private channel
-after users invite at least 6 referrals.
+A robust Telegram bot built with **Node.js** and **Express** that enforces
+**channel membership** and **tracks unique referrals** via a button-based menu.
+Users receive a personalised referral link after joining the main channel.
 
-## Features
-- Button menu keyboard
-- Referral tracking
-- Private channel access gate
-- Express server ready for deployment
+---
 
-## Setup
-1. Clone repo
-2. Create `.env`
-3. Install dependencies:
-   npm install
-4. Run:
-   npm start
+## ✨ Features
 
-## Notes
-- Replace in-memory DB with MongoDB or PostgreSQL for production
-- Bot must be admin in the private channel
+- 📌 Mandatory main channel join (auto-verified)
+- 🔗 Unique referral links per user
+- 📊 Referral counter (no duplicates, no self-referrals)
+- ⌨️ Button menu keyboard (clean UX)
+- 🚀 Express server (deployment-ready)
+- 🔐 Optional private-channel unlock logic
+
+---
+
+## 🧱 Tech Stack
+
+- Node.js (>=18)
+- Express
+- node-telegram-bot-api
+- dotenv
+
+---
+
+## ⚙️ Setup Instructions
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd telegram-referral-bot

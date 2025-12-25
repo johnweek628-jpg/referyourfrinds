@@ -1,20 +1,22 @@
-const { getUser } = require('./db');
-const { REQUIRED_REFERRALS } = require('./config');
+const { createUser, addReferral } = require('./db');
 
-function handleReferral(userId, referrerId) {
+async function handleReferral(userId, referrerId) {
+  // No referrer or self-referral
   if (!referrerId || referrerId === userId) return;
 
-  const user = getUser(userId);
+  // Ensure users exist
+  const user = createUser(userId);
+  createUser(referrerId);
+
+  // User can only be referred once
   if (user.referredBy) return;
 
+  // Add referral uniquely
+  const added = addReferral(referrerId, userId);
+  if (!added) return;
+
+  // Record who referred this user
   user.referredBy = referrerId;
-
-  const referrer = getUser(referrerId);
-  referrer.referrals += 1;
-
-  if (referrer.referrals >= REQUIRED_REFERRALS) {
-    referrer.unlocked = true;
-  }
 }
 
 module.exports = { handleReferral };
