@@ -14,7 +14,7 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 console.log('🤖 Bot is alive and kicking');
 
 /**
- * Check channel membership
+ * Check if user is a channel member
  */
 async function isMember(userId) {
   try {
@@ -36,11 +36,7 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
   if (!user) user = createUser(userId);
 
   // Save referral but DO NOT count yet
-  if (
-    referrerId &&
-    referrerId !== userId &&
-    !user.referredBy
-  ) {
+  if (referrerId && referrerId !== userId && !user.referredBy) {
     user.pendingReferrer = referrerId;
   }
 
@@ -75,15 +71,15 @@ bot.on('callback_query', async (query) => {
     });
   }
 
-  // ✅ COUNT REFERRAL HERE (ONCE)
+  // ✅ COUNT REFERRAL HERE (ONCE AND ONLY ONCE)
   if (user.pendingReferrer && !user.referredBy) {
     const success = confirmReferral(userId, user.pendingReferrer);
 
     if (success) {
       const referrer = getUser(user.pendingReferrer);
 
-      // 🔔 Notify referrer
-      bot.sendMessage(
+      // 🔔 Notify referrer immediately
+      await bot.sendMessage(
         user.pendingReferrer,
         `🎉 Tabriklaymiz!\n\n👥 Sizning taklif qilgan do‘stlaringiz soni: ${referrer.referrals}`
       );
@@ -100,10 +96,19 @@ bot.on('callback_query', async (query) => {
 });
 
 /**
- * Send referral link
+ * Send referral link (WITH GUARANTEED SHARE TEXT)
  */
 function sendReferral(userId) {
   const referralLink = `https://t.me/${BOT_USERNAME}?start=${userId}`;
+
+  const shareText =
+`🎓 IELTS 7.5 / CEFR C1 sertifikatiga ega,
+8 yillik tajribali Jasurbek va Javohirdan
+bepul darslar va foydali materiallarni olish uchun
+shu kanalga qo‘shilib oling 👇`;
+
+  const shareUrl =
+`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
 
   bot.sendMessage(
     userId,
@@ -117,10 +122,7 @@ ${referralLink}`,
           [
             {
               text: "📤 Do‘stlarga ulashish",
-              switch_inline_query:
-`🎓 Bepul IELTS darslari va foydali materiallar 👇
-
-${referralLink}`
+              url: shareUrl
             }
           ]
         ]
