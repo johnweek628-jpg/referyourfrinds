@@ -1,47 +1,36 @@
-const users = new Map();
+import fs from 'fs';
 
-/**
- * Create a new user if they do not exist
- */
-function createUser(userId) {
-  if (!users.has(userId)) {
-    users.set(userId, {
-      id: userId,
-      referrals: 0,
-      referredBy: null,
-      referralsList: new Set()
-    });
-  }
-  return users.get(userId);
+const DB_FILE = './users.json';
+
+let users = {};
+
+// Load users from file
+if (fs.existsSync(DB_FILE)) {
+  users = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 }
 
-/**
- * Get an existing user (returns null if not found)
- */
-function getUser(userId) {
-  return users.get(userId) || null;
+function save() {
+  fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
 }
 
-/**
- * Add a unique referral safely
- */
-function addReferral(referrerId, newUserId) {
-  const referrer = users.get(referrerId);
-  if (!referrer) return false;
+// ✅ GET USER
+export function getUser(userId) {
+  return users[userId] || null;
+}
 
-  // Prevent duplicate referrals
-  if (referrer.referralsList.has(newUserId)) {
-    return false;
-  }
+// ✅ CREATE USER
+export function createUser(userId) {
+  users[userId] = {
+    referrals: 0
+  };
+  save();
+  return users[userId];
+}
 
-  referrer.referralsList.add(newUserId);
-  referrer.referrals += 1;
+// ✅ ADD REFERRAL SAFELY
+export function addReferral(referrerId, newUserId) {
+  if (!users[referrerId]) return false;
+  users[referrerId].referrals += 1;
+  save();
   return true;
 }
-
-module.exports = {
-  users,
-  createUser,
-  getUser,
-  addReferral
-};
