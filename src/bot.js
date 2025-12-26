@@ -36,7 +36,11 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
   if (!user) user = createUser(userId);
 
   // Save referral but DO NOT count yet
-  if (referrerId && referrerId !== userId && !user.referredBy) {
+  if (
+    referrerId &&
+    referrerId !== userId &&
+    !user.referredBy
+  ) {
     user.pendingReferrer = referrerId;
   }
 
@@ -61,6 +65,7 @@ bot.on('callback_query', async (query) => {
 
   const userId = query.from.id;
   const user = getUser(userId);
+  if (!user) return;
 
   const member = await isMember(userId);
 
@@ -71,16 +76,18 @@ bot.on('callback_query', async (query) => {
     });
   }
 
-  // ✅ COUNT REFERRAL HERE (ONCE AND ONLY ONCE)
+  // ✅ CONFIRM & COUNT REFERRAL (ONCE)
   if (user.pendingReferrer && !user.referredBy) {
-    const success = confirmReferral(userId, user.pendingReferrer);
+    const referrerId = user.pendingReferrer;
 
-    if (success) {
-      const referrer = getUser(user.pendingReferrer);
+    const confirmed = confirmReferral(userId, referrerId);
 
-      // 🔔 Notify referrer immediately
+    if (confirmed) {
+      const referrer = getUser(referrerId);
+
+      // 🔔 ALWAYS notify referrer
       await bot.sendMessage(
-        user.pendingReferrer,
+        referrerId,
         `🎉 Tabriklaymiz!\n\n👥 Sizning taklif qilgan do‘stlaringiz soni: ${referrer.referrals}`
       );
     }
@@ -96,7 +103,7 @@ bot.on('callback_query', async (query) => {
 });
 
 /**
- * Send referral link (CLEAN SHARE FORMAT)
+ * Send referral link (WORKING SHARE BUTTON)
  */
 function sendReferral(userId) {
   const referralLink = `https://t.me/${BOT_USERNAME}?start=${userId}`;
