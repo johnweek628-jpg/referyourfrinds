@@ -1,65 +1,35 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// db.js
 
-/* Resolve absolute path */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const users = new Map();
 
-const DB_FILE = path.join(__dirname, 'users.json');
-
-let users = {};
-
-/* Load database */
-try {
-  if (fs.existsSync(DB_FILE)) {
-    users = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-  }
-} catch (err) {
-  console.error('❌ Failed to load users.json:', err);
-  users = {};
-}
-
-/* Save database */
-function save() {
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
-  } catch (err) {
-    console.error('❌ Failed to save users.json:', err);
-  }
-}
-
-/* Get user */
+/**
+ * Get user by Telegram ID
+ */
 export function getUser(userId) {
-  return users[userId] || null;
+  return users.get(userId);
 }
 
-/* Create user if not exists */
+/**
+ * Create new user
+ */
 export function createUser(userId) {
-  if (!users[userId]) {
-    users[userId] = {
-      referrals: 0,
-      referredBy: null,
-      referralConfirmed: false,
-      pendingReferrer: null
-    };
-    save();
-  }
-  return users[userId];
+  const user = {
+    id: userId,
+    referrals: 0,
+    referredBy: null,
+    pendingReferrer: null
+  };
+
+  users.set(userId, user);
+  return user;
 }
 
-/* Confirm referral (count only once) */
-export function confirmReferral(userId, referrerId) {
-  const user = users[userId];
-  const referrer = users[referrerId];
-
-  if (!user || !referrer) return false;
-  if (user.referralConfirmed) return false;
-
-  user.referredBy = referrerId;
-  user.referralConfirmed = true;
-  referrer.referrals += 1;
-
-  save();
-  return true;
+/**
+ * Increment referral count
+ */
+export function addReferral(referrerId) {
+  const referrer = users.get(referrerId);
+  if (referrer) {
+    referrer.referrals += 1;
+  }
 }

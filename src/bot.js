@@ -5,8 +5,9 @@ import {
   MAIN_CHANNEL_USERNAME,
   BOT_USERNAME
 } from './config.js';
+
 import { getUser, createUser, addReferral } from './db.js';
-import { joinConfirmKeyboard, mainKeyboard } from './keyboard.js';
+import { joinConfirmKeyboard } from './keyboard.js';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
@@ -77,8 +78,7 @@ bot.on('callback_query', async (query) => {
   // Count referral ONLY here
   if (
     user.pendingReferrer &&
-    !user.referredBy &&
-    await isMember(userId)
+    !user.referredBy
   ) {
     addReferral(user.pendingReferrer);
     user.referredBy = user.pendingReferrer;

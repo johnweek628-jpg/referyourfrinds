@@ -1,29 +1,19 @@
-import { getUser, createUser } from './db.js';
+import { getUser, createUser, confirmReferral } from './db.js';
 
 /**
- * Handle referral on /start
- * This ONLY stores a pending referrer.
- * Actual counting happens AFTER channel join + confirm.
+ * Confirm and count referral AFTER channel join
  */
-export function handleReferral(userId, referrerId) {
-  // 🚫 No referrer or self-referral
-  if (!referrerId || referrerId === userId) return;
+export function handleReferral(userId) {
+  const user = getUser(userId);
+  if (!user) return;
 
-  // ✅ Ensure user exists
-  let user = getUser(userId);
-  if (!user) {
-    user = createUser(userId);
-  }
+  const referrerId = user.pendingReferrer;
+  if (!referrerId) return;
 
-  // 🚫 Already confirmed referral → ignore
-  if (user.referralConfirmed) return;
-
-  // 🚫 Already has a pending referrer → ignore
-  if (user.pendingReferrer) return;
-
-  // ✅ Ensure referrer exists
   createUser(referrerId);
 
-  // ✅ Store pending referrer (DO NOT COUNT YET)
-  user.pendingReferrer = referrerId;
+  const success = confirmReferral(userId, referrerId);
+  if (!success) return;
+
+  user.pendingReferrer = null;
 }
