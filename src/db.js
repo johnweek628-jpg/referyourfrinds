@@ -38,7 +38,7 @@ export function createUser(userId) {
   if (!users[userId]) {
     users[userId] = {
       referrals: 0,
-      joinedAt: Date.now()
+      referredBy: null
     };
     save();
   }
