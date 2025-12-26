@@ -96,19 +96,19 @@ bot.on('callback_query', async (query) => {
 });
 
 /**
- * Send referral link (WITH GUARANTEED SHARE TEXT)
+ * Send referral link (CLEAN SHARE FORMAT)
  */
 function sendReferral(userId) {
   const referralLink = `https://t.me/${BOT_USERNAME}?start=${userId}`;
 
-  const shareText =
-`🎓 IELTS 7.5 / CEFR C1 sertifikatiga ega,
+  const shareText = `🎓 IELTS 7.5 / CEFR C1 sertifikatiga ega,
 8 yillik tajribali Jasurbek va Javohirdan
 bepul darslar va foydali materiallarni olish uchun
-shu kanalga qo‘shilib oling 👇`;
+shu kanalga qo‘shilib oling 👇
+${referralLink}`;
 
   const shareUrl =
-`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
+    `https://t.me/share/url?text=${encodeURIComponent(shareText)}`;
 
   bot.sendMessage(
     userId,
