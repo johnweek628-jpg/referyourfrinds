@@ -39,7 +39,7 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
     return;
   }
 
-  const referralLink = `https://t.me/${bot.options.username}?start=${userId}`;
+const referralLink = `https://t.me/${process.env.BOT_USERNAME}?start=${userId}`;
 
   await bot.sendMessage(
     userId,

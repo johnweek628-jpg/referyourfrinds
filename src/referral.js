@@ -1,22 +1,25 @@
-const { createUser, addReferral } = require('./db');
+import { getUser, createUser, addReferral } from './db.js';
 
-async function handleReferral(userId, referrerId) {
-  // No referrer or self-referral
+export async function handleReferral(userId, referrerId) {
+  // ❌ No referrer or self-referral
   if (!referrerId || referrerId === userId) return;
 
-  // Ensure users exist
-  const user = createUser(userId);
-  createUser(referrerId);
+  // ✅ Ensure user exists
+  let user = getUser(userId);
+  if (!user) user = createUser(userId);
 
-  // User can only be referred once
+  // ✅ Ensure referrer exists
+  if (!getUser(referrerId)) {
+    createUser(referrerId);
+  }
+
+  // ❌ User can only be referred once
   if (user.referredBy) return;
 
-  // Add referral uniquely
-  const added = addReferral(referrerId, userId);
+  // ✅ Add referral
+  const added = addReferral(referrerId);
   if (!added) return;
 
-  // Record who referred this user
+  // ✅ Lock referral
   user.referredBy = referrerId;
 }
-
-module.exports = { handleReferral };

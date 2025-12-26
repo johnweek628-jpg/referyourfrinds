@@ -1,16 +1,31 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const DB_FILE = './users.json';
+// Resolve absolute path safely
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DB_FILE = path.join(__dirname, 'users.json');
 
 let users = {};
 
-// Load users from file
-if (fs.existsSync(DB_FILE)) {
-  users = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+// Load users safely
+try {
+  if (fs.existsSync(DB_FILE)) {
+    users = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  }
+} catch (err) {
+  console.error('❌ Failed to load users.json:', err);
+  users = {};
 }
 
 function save() {
-  fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+  } catch (err) {
+    console.error('❌ Failed to save users.json:', err);
+  }
 }
 
 // ✅ GET USER
@@ -20,15 +35,18 @@ export function getUser(userId) {
 
 // ✅ CREATE USER
 export function createUser(userId) {
-  users[userId] = {
-    referrals: 0
-  };
-  save();
+  if (!users[userId]) {
+    users[userId] = {
+      referrals: 0,
+      joinedAt: Date.now()
+    };
+    save();
+  }
   return users[userId];
 }
 
-// ✅ ADD REFERRAL SAFELY
-export function addReferral(referrerId, newUserId) {
+// ✅ ADD REFERRAL
+export function addReferral(referrerId) {
   if (!users[referrerId]) return false;
   users[referrerId].referrals += 1;
   save();
