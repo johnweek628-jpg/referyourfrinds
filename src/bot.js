@@ -1,4 +1,4 @@
-const TelegramBot = require('node-telegram-bot-api');
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const { BOT_TOKEN, MAIN_CHANNEL_ID } = require('./config');
 const { getUser, createUser } = require('./db');
 const { handleReferral } = require('./referral');
@@ -19,7 +19,7 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
     user = createUser(userId);
   }
 
-  // Handle referral safely (unique, no self-referral)
+  // Handle referral safely
   await handleReferral(userId, referrerId);
 
   // Check if user joined main channel
@@ -29,13 +29,13 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
     if (['left', 'kicked'].includes(member.status)) {
       return bot.sendMessage(
         userId,
-        "🚫 To continue, please join our main channel first.",
+        "🚫 Davom etish uchun avval kanalga qo‘shiling.",
         {
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: "📢 Join Channel",
+                  text: "📢 Kanalga qo‘shilish",
                   url: `https://t.me/${MAIN_CHANNEL_ID.replace('@', '')}`
                 }
               ]
@@ -45,15 +45,31 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
       );
     }
   } catch (err) {
-    console.error("Channel membership check failed:", err.message);
+    console.error("Channel check failed:", err.message);
     return;
   }
 
-  // Thank user and send referral link automatically
+  const referralLink = `https://t.me/${bot.options.username}?start=${userId}`;
+
+  // ✅ FINAL MESSAGE WITH SHARE BUTTON
   await bot.sendMessage(
     userId,
-    `🎉 Thanks for joining!\n\nHere’s your personal referral link 👇\nhttps://t.me/${bot.options.username}?start=${userId}`,
-    mainKeyboard()
+    `🎉 Rahmat!\n\n🔗 Sizning shaxsiy referral havolangiz:\n${referralLink}`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "📤 Do‘stlarga ulashish",
+              switch_inline_query:
+`🎓 8 yillik tajribaga ega IELTS 7.5, CEFR C1 darajasidagi ustozlardan bepul online darslar va maslahatlarga ega bo‘lish uchun shu kanalga qo‘shilib oling 👇
+
+${referralLink}`
+            }
+          ]
+        ]
+      }
+    }
   );
 });
 
@@ -72,7 +88,7 @@ bot.on('message', async (msg) => {
   if (text === "📊 My Referrals") {
     return bot.sendMessage(
       userId,
-      `📈 You’ve referred *${user.referrals}* unique user(s).\nKeep spreading the word 🚀`,
+      `📈 Siz *${user.referrals}* ta odamni taklif qildingiz.\nDavom eting 🚀`,
       { parse_mode: 'Markdown' }
     );
   }
@@ -80,7 +96,7 @@ bot.on('message', async (msg) => {
   if (text === "🔗 My Referral Link") {
     return bot.sendMessage(
       userId,
-      `🔗 Your referral link:\nhttps://t.me/${bot.options.username}?start=${userId}`
+      `🔗 Sizning referral havolangiz:\nhttps://t.me/${bot.options.username}?start=${userId}`
     );
   }
 });
