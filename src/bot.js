@@ -12,8 +12,3 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 console.log('🤖 Bot started successfully');
 
 export default bot;
-
-bot.on('message', msg => {
-  console.log('📩 Message received:', msg.text);
-  bot.sendMessage(msg.chat.id, '✅ Bot is alive');
-});
