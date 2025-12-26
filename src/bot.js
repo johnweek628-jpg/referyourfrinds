@@ -1,3 +1,5 @@
+console.log("🚀 LIVE BOT: Uzbek version with Share button");
+
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const { BOT_TOKEN, MAIN_CHANNEL_ID } = require('./config');
 const { getUser, createUser } = require('./db');
