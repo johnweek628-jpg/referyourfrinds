@@ -6,7 +6,7 @@ import {
   BOT_USERNAME
 } from './config.js';
 
-import { getUser, createUser, addReferral } from './db.js';
+import { getUser, createUser, confirmReferral } from './db.js';
 import { joinConfirmKeyboard } from './keyboard.js';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -26,7 +26,7 @@ async function isMember(userId) {
 }
 
 /**
- * /start handler
+ * /start command
  */
 bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
   const userId = msg.from.id;
@@ -35,7 +35,7 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
   let user = getUser(userId);
   if (!user) user = createUser(userId);
 
-  // Save pending referral (do NOT count yet)
+  // Save referral but DO NOT count yet
   if (
     referrerId &&
     referrerId !== userId &&
@@ -58,7 +58,7 @@ bot.onText(/\/start(?:\s(\d+))?/, async (msg, match) => {
 });
 
 /**
- * Confirm join handler
+ * Confirm join button
  */
 bot.on('callback_query', async (query) => {
   if (query.data !== 'confirm_join') return;
@@ -75,13 +75,20 @@ bot.on('callback_query', async (query) => {
     });
   }
 
-  // Count referral ONLY here
-  if (
-    user.pendingReferrer &&
-    !user.referredBy
-  ) {
-    addReferral(user.pendingReferrer);
-    user.referredBy = user.pendingReferrer;
+  // ✅ COUNT REFERRAL HERE (ONCE)
+  if (user.pendingReferrer && !user.referredBy) {
+    const success = confirmReferral(userId, user.pendingReferrer);
+
+    if (success) {
+      const referrer = getUser(user.pendingReferrer);
+
+      // 🔔 Notify referrer
+      bot.sendMessage(
+        user.pendingReferrer,
+        `🎉 Tabriklaymiz!\n\n👥 Sizning taklif qilgan do‘stlaringiz soni: ${referrer.referrals}`
+      );
+    }
+
     delete user.pendingReferrer;
   }
 
