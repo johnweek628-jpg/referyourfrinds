@@ -1,7 +1,9 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
 
-module.exports = {
-  BOT_TOKEN: process.env.BOT_TOKEN,
-  MAIN_CHANNEL_ID: process.env.MAIN_CHANNEL_ID,
+dotenv.config();
+
+export const BOT_TOKEN = process.env.BOT_TOKEN;
+export const MAIN_CHANNEL_ID = process.env.MAIN_CHANNEL_ID;
+
   PORT: process.env.PORT || 3000
 };
