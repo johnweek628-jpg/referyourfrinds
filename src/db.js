@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Resolve absolute path safely
+/* Resolve absolute path */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -10,7 +10,7 @@ const DB_FILE = path.join(__dirname, 'users.json');
 
 let users = {};
 
-// Load users safely
+/* Load database */
 try {
   if (fs.existsSync(DB_FILE)) {
     users = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
@@ -20,6 +20,7 @@ try {
   users = {};
 }
 
+/* Save database */
 function save() {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
@@ -28,27 +29,37 @@ function save() {
   }
 }
 
-// ✅ GET USER
+/* Get user */
 export function getUser(userId) {
   return users[userId] || null;
 }
 
-// ✅ CREATE USER
+/* Create user if not exists */
 export function createUser(userId) {
   if (!users[userId]) {
     users[userId] = {
       referrals: 0,
-      referredBy: null
+      referredBy: null,
+      referralConfirmed: false,
+      pendingReferrer: null
     };
     save();
   }
   return users[userId];
 }
 
-// ✅ ADD REFERRAL
-export function addReferral(referrerId) {
-  if (!users[referrerId]) return false;
-  users[referrerId].referrals += 1;
+/* Confirm referral (count only once) */
+export function confirmReferral(userId, referrerId) {
+  const user = users[userId];
+  const referrer = users[referrerId];
+
+  if (!user || !referrer) return false;
+  if (user.referralConfirmed) return false;
+
+  user.referredBy = referrerId;
+  user.referralConfirmed = true;
+  referrer.referrals += 1;
+
   save();
   return true;
 }
